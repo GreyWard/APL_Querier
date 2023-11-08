@@ -11,7 +11,7 @@ import query_gen as qg
 # panggil API_key di code mike
 
 # openai.api_key = st.secrets["api_secret"]
-openai.api_key = "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"
+openai.api_key = "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"
 
 # create a function which will generate the calls from the API
 # Struktur kode query_gen

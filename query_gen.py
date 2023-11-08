@@ -2,7 +2,7 @@ import os
 import openai
 
 # ubah api key sesuai yang bisa dipakai
-openai.api_key = "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"
+openai.api_key = "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"
 content_string = "Given the following SQL tables, your job is to write queries given a user's request.\n\n"
 query_prompt =  "Write a SQL query which "
 
