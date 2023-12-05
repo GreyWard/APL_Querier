@@ -1,48 +1,91 @@
-# install streamlit
-# install streamlit-chat
-# install openai
-
+# .py untuk interface web app Querier
+# integrasi Front-End dan Back-End
 
 import streamlit as st
 import openai
-from streamlit_chat import message
+import random
 import query_gen as qg
+import bigquery_wrapper as bq
+from google.oauth2 import service_account
+from google.cloud import bigquery
 
-# panggil API_key di code mike
-
-# openai.api_key = st.secrets["api_secret"]
-openai.api_key = "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"
-
-# create a function which will generate the calls from the API
-# Struktur kode query_gen
-# inisiasi terlebih dahulu struktur dari tabel database yang dimaksud
-qg.initiate_table("CREATE TABLE Orders (\n  OrderID int,\n  CustomerID int,\n  OrderDate datetime,\n  OrderTime varchar(8),\n  PRIMARY KEY (OrderID)\n);\n\nCREATE TABLE OrderDetails (\n  OrderDetailID int,\n  OrderID int,\n  ProductID int,\n  Quantity int,\n  PRIMARY KEY (OrderDetailID)\n);\n\nCREATE TABLE Products (\n  ProductID int,\n  ProductName varchar(50),\n  Category varchar(50),\n  UnitPrice decimal(10, 2),\n  Stock int,\n  PRIMARY KEY (ProductID)\n);\n\nCREATE TABLE Customers (\n  CustomerID int,\n  FirstName varchar(50),\n  LastName varchar(50),\n  Email varchar(100),\n  Phone varchar(20),\n  PRIMARY KEY (CustomerID)\n);")
-# masukan prompt yang akan diminta oleh user, diawali kalimat perintah
-generated_query = qg.generate("computes the average total order value for all orders on 2023-04-01.")
+#------------------INITIATE CREDENTIALS FOR DEV-----------------------------------------------------------
+api_key = st.secrets["OPENAI_API_KEY"]
+credentials = "querier-test-01-a8cea750269c.json"
 
 
-st.title("QUERIER")
+#------------------INITIATE QUERY GEN & BIGQUERY WRAPPER--------------------------------------------------
+query_gpt = qg.chatClient(api_key)
+client = bq.databaseClient(credentials)
+metadata = client.fetch_metadata()
+response = query_gpt.sendMeta(metadata)
 
-# Storing the chat
-if 'generated' not in st.session_state:
-    st.session_state['generated'] = []
+#------------------------------------STREAMLIT------------------------------------------------------------
+st.set_page_config(page_title="Querier",
+                   initial_sidebar_state="collapsed", 
+                   layout="wide")
+st.title("Querier")
 
-if 'past' not in st.session_state:
-    st.session_state['past'] = []
+# function for streamlit
+def button_resp():
+    if st.session_state.button1:
+        q_resp = st.chat_message("assistant")
+        # Assistant's message with the result
+        q_resp.write(client.send_query(query_gpt.generate(prompt)))
+        #st.table()
+        #st.session_state.messages.append({"role": "assistant", "content": result})
 
-def get_text():
-    input_text = st.text_input("User: ", "Hello, how are you?", key="input")
-    return input_text
+    elif st.session_state.button2:
+        st.session_state.messages.append({"role": "assistant", "content": "Let's try another prompt."})
+    
+    # Clear button states after processing
+    st.session_state.button1 = False
+    st.session_state.button2 = False
 
-user_input = get_text()
+# ---SIDEBAR---
+with st.sidebar:
+    st.text_input("Username")
+    st.text_input("Password")
 
-if user_input:
-    output = generate_response(user_input) # panggil fungsi generate dari API(user_input)
-    # store the output
-    st.session_state.past.append(user_input)
-    st.session_state.generated.append(output)
+    tab1, tab2 = st.tabs(["Tutorial", "About Us"])
+    
+    with tab1:
+        st.markdown("All you need is insert prompt")
+    
+    with tab2:
+        st.markdown("A project to help people play with SQL without any prior knowledge!")
 
-if st.session_state['generated']:
-    for i in range(len(st.session_state['generated'])-1, -1, -1):
-        message(st.session_state["generated"][i], key = str(i))
-        message(st.session_state['past'][i], is_user = True, key = str(i) + '_user')
+# ---CHAT ELEMENT---
+prompt = st.chat_input("Insert your prompt here", key='prompt')
+
+# inisiasi chat history
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+# display chat messages from history on app rerun
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+
+# Interaksi Dalam Chat
+if prompt:
+    # user side
+    st.session_state.messages.append({"role":"user", "content":prompt})
+
+    with st.chat_message("user"):
+        st.markdown(prompt)
+
+    # assistant side
+    with st.chat_message("assistant"):
+        response = query_gpt.generate(prompt)
+        st.session_state.messages.append({"role":"assistant", "content":response})
+        st.markdown(f"{response}. Do you want to execute?")
+
+        # button to execute
+        col1, col2 = st.columns([1,1])
+        
+        with col1:
+            button1 = st.button('✅ Yes', key = 'button1', use_container_width=True, on_click= button_resp)
+
+        with col2:
+            button2 = st.button('❌ No', key = 'button2', use_container_width = True, on_click= button_resp)

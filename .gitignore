@@ -1,1 +1,5 @@
 querier-test-01-a8cea750269c.json
+__pycache__/query_gen.cpython-39.pyc
+__pycache__/bigquery_wrapper.cpython-39.pyc
+.streamlit/secrets.toml
+.gitignore

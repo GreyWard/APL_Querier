@@ -18,7 +18,7 @@ class databaseClient:
         FROM `querier-test-01.Test_01`.INFORMATION_SCHEMA.COLUMNS
         ORDER BY table_name, ordinal_position
         """
-        query_job = client.query(query)
+        query_job = self.client.query(query)
         # Convert to tables
         tables = {}
         for table_name, column_name, datatype in query_job:
@@ -30,7 +30,7 @@ class databaseClient:
         for table_name, columns in tables.items():
             columns_str = ",\n".join(columns)
             sql_statement = f"CREATE TABLE {table_name} (\n{columns_str}\n);"
-            sql_statements = append(sql_statement)
+            sql_statements.append(sql_statement)
         return sql_statements
     
     # Send query and get the response

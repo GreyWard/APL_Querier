@@ -9,7 +9,7 @@ import openai
 class chatClient:
     # Menginisiasikan client ke chatGPT, masukan api_key sebagai string disini
     def __init__(self,api_key):
-        self.openai.api_key = api_key
+        openai.api_key = api_key
         self.content_string = "Given the following SQL tables, your job is to write queries given a user's request.\n\n"
         self.query_prompt =  "Write a SQL query which "
        
