@@ -4,6 +4,7 @@
 import streamlit as st
 import openai
 import random
+import time
 import query_gen as qg
 import bigquery_wrapper as bq
 from google.oauth2 import service_account
@@ -19,7 +20,7 @@ query_gpt = qg.chatClient(api_key)
 client = bq.databaseClient(credentials)
 metadata = client.fetch_metadata()
 response = query_gpt.sendMeta(metadata)
-
+query = ""
 #------------------------------------STREAMLIT------------------------------------------------------------
 st.set_page_config(page_title="Querier",
                    initial_sidebar_state="collapsed", 
@@ -31,7 +32,10 @@ def button_resp():
     if st.session_state.button1:
         q_resp = st.chat_message("assistant")
         # Assistant's message with the result
-        q_resp.write(client.send_query(query_gpt.generate(prompt)))
+        start = time.time()
+        q_resp.write(client.send_query(query))
+        end = time.time()
+        print("Load time: ", (end-start))
         #st.table()
         #st.session_state.messages.append({"role": "assistant", "content": result})
 
@@ -77,9 +81,12 @@ if prompt:
 
     # assistant side
     with st.chat_message("assistant"):
-        response = query_gpt.generate(prompt)
-        st.session_state.messages.append({"role":"assistant", "content":response})
-        st.markdown(f"{response}. Do you want to execute?")
+        start = time.time()
+        query = query_gpt.generate(prompt)
+        end = time.time()
+        print("prompt to query time: ", (end-start))
+        st.session_state.messages.append({"role":"assistant", "content":query})
+        st.markdown(f"{query}. Do you want to execute?")
 
         # button to execute
         col1, col2 = st.columns([1,1])

@@ -5,6 +5,7 @@
 # contoh: client = databaseClient('file credential')
 from google.oauth2 import service_account
 from google.cloud import bigquery
+import time
 class databaseClient:
     # Initialize database connection through credential filename
     def __init__(self,credential):
@@ -35,6 +36,9 @@ class databaseClient:
     
     # Send query and get the response
     def send_query(self,query):
+        start = time.time()
         response = self.client.query(query).to_dataframe()
+        end = time.time()
+        print("query execution time: ", (end-start))
         return response
     

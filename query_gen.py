@@ -5,7 +5,7 @@
 # contoh: client = databaseClient('api_keynya')
 import os
 import openai
-
+import time
 class chatClient:
     # Menginisiasikan client ke chatGPT, masukan api_key sebagai string disini
     def __init__(self,api_key):
@@ -26,7 +26,10 @@ class chatClient:
 
     # Fungsi generate query baru, return dalam bentuk string
     def generate(self,prompt):
+        start = time.time()
         finished_prompt = self.query_prompt + prompt
+        end = time.time()
+        print("prompt parsing time: ", (end-start))
         response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=[
